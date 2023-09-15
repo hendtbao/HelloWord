@@ -1,0 +1,29 @@
+ /**
+     * 查询树形结构
+     * @param courseCategoryDTO
+     * @return
+     */
+    @Override
+    public List<CourseCategoryVO> getList(CourseCategoryDTO courseCategoryDTO) {
+        List<CourseCategoryVO> courseCategoryList = courseCategoryMapper.pageQuery(courseCategoryDTO);
+        //filter是java8的写法，取得所有parentId为0的数据，也就是一级目录
+        List<CourseCategoryVO> list = courseCategoryList.stream().filter(subjectVO ->
+            subjectVO.getParentId().equals("0")
+        ).map((menu)->{
+            menu.setChildren(getChildrenData(menu,courseCategoryList));
+            return menu;
+        }).collect(Collectors.toList());
+        return list;
+    }
+
+
+    //获取孩子（下级目录）的方法，递归实现
+    private List<CourseCategoryVO> getChildrenData(CourseCategoryVO root, List<CourseCategoryVO> courseCategoryList) {
+        List<CourseCategoryVO> children = courseCategoryList.stream().filter(subjectVO ->
+            subjectVO.getParentId().equals(root.getCourseCategoryId())
+        ).map(subjectVO -> {
+            subjectVO.setChildren(getChildrenData(subjectVO,courseCategoryList));
+            return subjectVO;
+        }).collect(Collectors.toList());
+        return children;
+    }
